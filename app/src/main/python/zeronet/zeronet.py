@@ -14,8 +14,12 @@ def main():
         print("- Starting ZeroNet...")
 
     main = None
+    from .src.Config import config
+    print(config.start_dir)
+    sys.path.insert(0,config.start_dir + '/src')
+    sys.path.insert(0,config.start_dir + '/plugins')
     try:
-        from .src.main import main
+        from .src import main
         main.start()
     except Exception as err:  # Prevent closing
         import traceback
@@ -28,7 +32,11 @@ def main():
         from .src.Config import config
         error_log_path = config.log_dir + "/error.log"
         print("error_log_path---{}".format(error_log_path))
-        traceback.print_exc(file=open(error_log_path, "w"))
+        # if os.path.is_file(error_log_path):
+        # file = open(error_log_path, "w")
+        # traceback.print_exc(file)
+        traceback.print_exc(file = open(error_log_path, "w"))
+
         print("---")
         print("Please report it: https://github.com/HelloZeroNet/ZeroNet/issues/new?assignees=&labels=&template=bug-report.md")
         if sys.platform.startswith("win"):
