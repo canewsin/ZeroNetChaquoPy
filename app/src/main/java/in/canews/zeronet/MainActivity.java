@@ -1,6 +1,7 @@
 package in.canews.zeronet;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -46,14 +47,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        callPython();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                unZipAssets();
+                callPython();
+            }
+        }).start();
     }
 
     private void callPython() {
+        PyObject obj = py.getModule("ZeroNet.zeronet").callAttr("start");
+    }
+    String srcDir;
+
+    private void unZipAssets(){
         try {
-            InputStream f = getApplication().getAssets().open("zeronet.zip");
+            srcDir = getFilesDir() + File.separator + "chaquopy/AssetFinder/app/" + File.separator;
+            String zeroNetDir = srcDir +"ZeroNet";
+            InputStream f = getApplication().getAssets().open("ZeroNet.zip");
             ZipInputStream zin = new ZipInputStream(f);
-            File dir = new File(getCacheDir()+File.separator +"chaquopy/AssetFinder/app.zip/"+File.separator +"zeronet");
+            File dir = new File(zeroNetDir);
             if(!dir.exists()) dir.mkdir();
             ZipEntry ze = null;
             while ((ze = zin.getNextEntry()) != null) {
@@ -62,12 +76,12 @@ public class MainActivity extends AppCompatActivity {
                 if(ze.isDirectory()) {
                     dirChecker(ze.getName());
                 } else {
-                    String filePath = getCacheDir()+File.separator +"chaquopy/AssetFinder/app.zip/"+File.separator + ze.getName();
+                    String filePath = srcDir + ze.getName();
                     if(!new File(filePath).exists()){
-                    FileOutputStream fout = new FileOutputStream(filePath);
-                    for (int c = zin.read(); c != -1; c = zin.read()) {
-                        fout.write(c);
-                    }
+                        FileOutputStream fout = new FileOutputStream(filePath);
+                        for (int c = zin.read(); c != -1; c = zin.read()) {
+                            fout.write(c);
+                        }
                         zin.closeEntry();
                         fout.close();
                     }
@@ -79,12 +93,10 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        PyObject obj = py.getModule("zeronet.zeronet").callAttr("start");
-
     }
+
     private void dirChecker(String dir) {
-        String filePath = getCacheDir()+File.separator +"chaquopy/AssetFinder/app.zip/" +File.separator + dir;
+        String filePath = srcDir + dir;
         if(!new File(filePath).exists()){
         File f = new File(filePath);
 
